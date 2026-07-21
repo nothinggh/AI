@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 
 # 1. DB 연결 설정
-DB_PATH = "/home/smart/work/mini_mes/sql/mini_mes.db"
+DB_PATH = "/home/smart/work/pipe_mes/sql/pipe_mes.db"
 
 
 def get_connection():
@@ -14,7 +14,7 @@ def init_db():
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS orders (
+        CREATE TABLE IF NOT EXISTS Orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             material_type TEXT NOT NULL,
             material TEXT NOT NULL,
