@@ -176,7 +176,7 @@ if not df.empty:
 
         if selected_ids:
             st.warning(f"선택된 주문: {len(selected_ids)}건\n\nIDs: {selected_ids}")
-            if st.button("🗑️ 선택 항목 삭제"):
+            if st.button("선택 항목 삭제"):
                 conn = get_connection()
                 cursor = conn.cursor()
 
