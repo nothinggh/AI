@@ -1,0 +1,15 @@
+import streamlit as st
+
+from src import queries
+from ui import page_title, setup_page
+# from src.ui import metric_row, page_title, setup_page, show_dataframe
+
+
+setup_page("품목 조회")
+
+page_title(
+    "품목 조회",
+    "품목 기준정보가 제품과 원자재를 함께 관리하는 방식을 학습합니다.",
+    "item -> lot, item -> production_material",
+    "품목 유형과 검색어로 품목을 조회하고 LOT 연결 건수를 확인합니다.",
+)
