@@ -1,197 +1,361 @@
-import sqlite3
-import pandas as pd
 import streamlit as st
 
-# 1. DB 연결 설정
-DB_PATH = "/home/smart/work/pipe_mes/sql/pipe_mes.db"
+import sqlite3
 
+import pandas as pd
 
-def get_connection():
-    return sqlite3.connect(DB_PATH)
+from datetime import date
 
+  
+
+st.set_page_config(layout="wide")
+
+  
+
+st.markdown("""
+
+    <style>
+
+    .stTextInput > div > div > input, .stSelectbox > div > div > div, .stNumberInput > div > div > input, .stDateInput > div > div > input {
+
+        min-height: 28px !important;
+
+        height: 28px !important;
+
+        padding: 2px 8px !important;
+
+        font-size: 12px !important;
+
+    }
+
+    .stSelectbox label, .stTextInput label, .stNumberInput label, .stDateInput label, .stTextArea label {
+
+        font-size: 11px !important;
+
+        margin-bottom: 2px !important;
+
+    }
+
+    .stTextArea textarea {
+
+        font-size: 12px !important;
+
+        padding: 4px 8px !important;
+
+    }
+
+    div[data-baseweb="select"] {
+
+        min-height: 28px !important;
+
+    }
+
+    </style>
+
+""", unsafe_allow_html=True)
+
+  
+
+DB_PATH = "/home/gram/work/pipe_mes/sql/pipe_mes.db"
+
+  
 
 def init_db():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            material_type TEXT NOT NULL,
-            material TEXT NOT NULL,
-            size TEXT NOT NULL,
-            quantity INTEGER NOT NULL,
-            order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
 
+    conn = sqlite3.connect(DB_PATH)
+
+    c = conn.cursor()
+
+    c.execute("""
+
+        CREATE TABLE IF NOT EXISTS BOM (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            user_id TEXT,
+
+            ship_no TEXT,
+
+            item_type TEXT,
+
+            material TEXT,
+
+            size TEXT,
+
+            quantity INTEGER,
+
+            weight REAL,
+
+            price REAL,
+
+            order_date TEXT,
+
+            request_note TEXT
+
+        )
+
+    """)
+
+    conn.commit()
+
+    conn.close()
+
+  
 
 init_db()
 
-# 2. UI 데이터 정의
-SIZES = [
-    "8A",
-    "10A",
-    "15A",
-    "20A",
-    "25A",
-    "32A",
-    "40A",
-    "50A",
-    "65A",
-    "80A",
-    "100A",
-]
-MATERIALS = ["STEEL", "SUS", "COPPER"]
-MATERIAL_TYPES = [
-    "Pipe(6M)",
-    "coupling",
-    "Flange",
-    "elbow",
-    "tee",
-    "bolt",
-    "nut",
-    "gasket",
-]
+  
 
-st.set_page_config(page_title="주문 내역서 관리", layout="wide")
-st.title("자재 주문 내역서")
+WEIGHT_DATA = {
 
-# 3. 신규 주문 등록
-st.subheader("1. 신규 주문 입력")
-with st.form("order_form", clear_on_submit=True):
-    col1, col2, col3, col4 = st.columns(4)
+    "8A": 0.6, "10A": 0.8, "15A": 1.3, "20A": 1.7, "25A": 2.5,
 
-    with col1:
-        selected_type = st.selectbox("자재 (Item)", MATERIAL_TYPES)
-    with col2:
-        selected_material = st.selectbox("재질 (Material)", MATERIALS)
-    with col3:
-        selected_size = st.selectbox("SIZE", SIZES)
-    with col4:
-        quantity = st.number_input("수량 (Qty)", min_value=1, value=1, step=1)
+    "32A": 3.4, "40A": 4.1, "50A": 5.5, "65A": 7.4, "80A": 8.8, "100A": 12.2
 
-    submitted = st.form_submit_button("주문 등록")
+}
 
-    if submitted:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO orders (material_type, material, size, quantity) VALUES (?, ?, ?, ?)",
-            (selected_type, selected_material, selected_size, quantity),
-        )
-        conn.commit()
-        conn.close()
-        st.success("주문이 성공적으로 등록되었습니다.")
-        st.rerun()
+  
 
-st.divider()
+PRICE_DATA = {
 
-# 4. 주문 내역 조회 및 수정/삭제
-st.subheader("2. 전체 주문 내역 관리")
+    "Pipe(6M)": {"8A": 12000, "10A": 15000, "15A": 18000, "20A": 22000, "25A": 28000, "32A": 35000, "40A": 42000, "50A": 55000, "65A": 72000, "80A": 88000, "100A": 110000},
 
-conn = get_connection()
-df = pd.read_sql_query(
-    "SELECT id, material_type, material, size, quantity, order_date FROM orders ORDER BY id DESC",
-    conn,
-)
-conn.close()
+    "flange": {"8A": 3000, "10A": 3500, "15A": 4000, "20A": 5000, "25A": 6500, "32A": 8000, "40A": 9500, "50A": 12000, "65A": 16000, "80A": 20000, "100A": 26000},
 
-if not df.empty:
-    col_main, col_side = st.columns([3, 1])
+    "coupling": {"8A": 1500, "10A": 1800, "15A": 2000, "20A": 2500, "25A": 3200, "32A": 4000, "40A": 5000, "50A": 6500, "65A": 8500, "80A": 11000, "100A": 15000},
 
-    with col_main:
-        # 삭제용 체크박스 컬럼 추가
-        df.insert(0, "선택", False)
+    "bolt": {"8A": 300, "10A": 400, "15A": 500, "20A": 600, "25A": 800, "32A": 1000, "40A": 1200, "50A": 1500, "65A": 2000, "80A": 2500, "100A": 3000},
 
-        # 컬럼명 변경
-        df_display = df.rename(
-            columns={
-                "id": "주문번호",
-                "material_type": "자재",
-                "material": "재질",
-                "size": "SIZE",
-                "quantity": "수량",
-                "order_date": "주문일시",
-            }
-        )
+    "nut": {"8A": 200, "10A": 250, "15A": 300, "20A": 400, "25A": 500, "32A": 650, "40A": 800, "50A": 1000, "65A": 1300, "80A": 1600, "100A": 2000},
 
-        # st.data_editor를 사용하여 데이터 수정 및 선택 가능
-        edited_df = st.data_editor(
-            df_display,
-            hide_index=True,
-            use_container_width=True,
-            column_config={
-                "선택": st.column_config.CheckboxColumn("선택", default=False),
-                "주문번호": st.column_config.NumberColumn("주문번호", disabled=True),
-                "자재": st.column_config.SelectboxColumn(
-                    "자재", options=MATERIAL_TYPES, required=True
-                ),
-                "재질": st.column_config.SelectboxColumn(
-                    "재질", options=MATERIALS, required=True
-                ),
-                "SIZE": st.column_config.SelectboxColumn(
-                    "SIZE", options=SIZES, required=True
-                ),
-                "수량": st.column_config.NumberColumn(
-                    "수량", min_value=1, step=1, required=True
-                ),
-                "주문일시": st.column_config.DatetimeColumn("주문일시", disabled=True),
-            },
-        )
+    "gasket": {"8A": 500, "10A": 600, "15A": 800, "20A": 1000, "25A": 1200, "32A": 1500, "40A": 1800, "50A": 2300, "65A": 3000, "80A": 3800, "100A": 5000},
 
-        # 테이블 직접 수정 후 전체 저장 버튼
-        if st.button("변경사항 전체 저장", type="primary"):
-            conn = get_connection()
-            cursor = conn.cursor()
+    "elbow": {"8A": 2000, "10A": 2300, "15A": 2800, "20A": 3500, "25A": 4500, "32A": 6000, "40A": 7500, "50A": 10000, "65A": 14000, "80A": 18000, "100A": 24000},
 
-            for _, row in edited_df.iterrows():
-                cursor.execute(
-                    """
-                    UPDATE orders 
-                    SET material_type = ?, material = ?, size = ?, quantity = ? 
-                    WHERE id = ?
-                """,
-                    (
-                        row["자재"],
-                        row["재질"],
-                        row["SIZE"],
-                        int(row["수량"]),
-                        int(row["주문번호"]),
-                    ),
-                )
+    "tee": {"8A": 2500, "10A": 3000, "15A": 3500, "20A": 4500, "25A": 6000, "32A": 8000, "40A": 10000, "50A": 13000, "65A": 18000, "80A": 23000, "100A": 30000}
 
-            conn.commit()
-            conn.close()
-            st.success("변경 내용이 저장되었습니다.")
-            st.rerun()
+}
 
-    with col_side:
-        st.markdown("### 일괄 삭제")
+  
 
-        # 체크박스(선택)가 True인 행들 필터링
-        selected_rows = edited_df[edited_df["선택"] == True]
-        selected_ids = selected_rows["주문번호"].tolist()
+tab1, tab2 = st.tabs(["1. 자재 주문 등록", "2. 전체 주문 관리"])
 
-        if selected_ids:
-            st.warning(f"선택된 주문: {len(selected_ids)}건\n\nIDs: {selected_ids}")
-            if st.button("선택 항목 삭제"):
-                conn = get_connection()
-                cursor = conn.cursor()
+  
 
-                # 선택된 ID 일괄 삭제
-                cursor.executemany(
-                    "DELETE FROM orders WHERE id = ?",
-                    [(id_,) for id_ in selected_ids],
-                )
+with tab1:
 
-                conn.commit()
-                conn.close()
-                st.success(f"{len(selected_ids)}건의 주문이 삭제되었습니다.")
-                st.rerun()
-        else:
-            st.info("삭제할 항목의 체크박스를 좌측 테이블에서 선택하세요.")
+    col1, col2, col3, col4 = st.columns(4)
 
-else:
-    st.info("등록된 주문 내역이 없습니다.")
+    with col1:
+
+        user_id = st.text_input("주문자 ID")
+
+        material = st.selectbox("재질", ["steel", "sus", "copper", "asbestos", "rubber"])
+
+    with col2:
+
+        ship_no = st.text_input("호선 번호")
+
+        all_sizes = ["8A", "10A", "15A", "20A", "25A", "32A", "40A", "50A", "65A", "80A", "100A"]
+
+        if material in ["steel", "sus"]:
+
+            valid_sizes = [s for s in all_sizes if s not in ["8A", "10A"]]
+
+        elif material == "copper":
+
+            valid_sizes = ["8A", "10A"]
+
+        else:
+
+            valid_sizes = all_sizes
+
+        selected_size = st.selectbox("Size", valid_sizes)
+
+  
+
+    with col3:
+
+        item_type = st.selectbox("자재 종류", ["Pipe(6M)", "flange", "coupling", "bolt", "nut", "gasket", "elbow", "tee"])
+
+        quantity = st.number_input("수량", min_value=1, value=1, step=1)
+
+  
+
+    with col4:
+
+        order_date = st.date_input("주문 날짜", date.today())
+
+        calc_weight = WEIGHT_DATA.get(selected_size, 0.0) if item_type == "Pipe(6M)" else 0.0
+
+        calc_price = PRICE_DATA.get(item_type, {}).get(selected_size, 0)
+
+        st.text_input("중량(개당/kg)", value=str(calc_weight), disabled=True)
+
+        st.text_input("가격(개당/원)", value=str(calc_price), disabled=True)
+
+  
+
+    request_note = st.text_area("요청 사항", height=60)
+
+  
+
+    if st.button("등록"):
+
+        if not user_id or not ship_no:
+
+            st.error("주문자 ID와 호선 번호를 입력하세요.")
+
+        else:
+
+            conn = sqlite3.connect(DB_PATH)
+
+            c = conn.cursor()
+
+            c.execute("""
+
+                INSERT INTO BOM (user_id, ship_no, item_type, material, size, quantity, weight, price, order_date, request_note)
+
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+
+            """, (user_id, ship_no, item_type, material, selected_size, quantity, calc_weight, calc_price, str(order_date), request_note))
+
+            conn.commit()
+
+            conn.close()
+
+            st.success("등록되었습니다.")
+
+  
+
+with tab2:
+
+    conn = sqlite3.connect(DB_PATH)
+
+    df = pd.read_sql_query("SELECT * FROM BOM", conn)
+
+    conn.close()
+
+  
+
+    col_search, col_btn1, col_btn2 = st.columns([3, 1, 1])
+
+    with col_search:
+
+        search_kw = st.text_input("검색어 입력 (모든 컬럼 대상)", "")
+
+    if search_kw:
+
+        mask = df.astype(str).apply(lambda x: x.str.contains(search_kw, case=False)).any(axis=1)
+
+        df = df[mask]
+
+  
+
+    if "select_all" not in st.session_state:
+
+        st.session_state.select_all = False
+
+  
+
+    with col_btn1:
+
+        if st.button("전체 선택 / 해제"):
+
+            st.session_state.select_all = not st.session_state.select_all
+
+            st.rerun()
+
+  
+
+    if not df.empty:
+
+        df.insert(0, "선택", st.session_state.select_all)
+
+  
+
+        edited_df = st.data_editor(
+
+            df,
+
+            column_config={
+
+                "id": st.column_config.NumberColumn("ID", disabled=True),
+
+                "선택": st.column_config.CheckboxColumn("선택", default=False)
+
+            },
+
+            hide_index=True,
+
+            use_container_width=True
+
+        )
+
+  
+
+        with col_btn2:
+
+            if st.button("선택 삭제"):
+
+                selected_ids = edited_df[edited_df["선택"] == True]["id"].tolist()
+
+                if selected_ids:
+
+                    conn = sqlite3.connect(DB_PATH)
+
+                    c = conn.cursor()
+
+                    c.executemany("DELETE FROM BOM WHERE id = ?", [(i,) for i in selected_ids])
+
+                    conn.commit()
+
+                    conn.close()
+
+                    st.success("삭제되었습니다.")
+
+                    st.rerun()
+
+  
+
+        if st.button("수정사항 저장"):
+
+            conn = sqlite3.connect(DB_PATH)
+
+            c = conn.cursor()
+
+            for idx, row in edited_df.iterrows():
+
+                c.execute("""
+
+                    UPDATE BOM SET
+
+                        user_id = ?, ship_no = ?, item_type = ?, material = ?,
+
+                        size = ?, quantity = ?, weight = ?, price = ?,
+
+                        order_date = ?, request_note = ?
+
+                    WHERE id = ?
+
+                """, (
+
+                    row["user_id"], row["ship_no"], row["item_type"], row["material"],
+
+                    row["size"], int(row["quantity"]), float(row["weight"]), float(row["price"]),
+
+                    str(row["order_date"]), str(row["request_note"]), int(row["id"])
+
+                ))
+
+            conn.commit()
+
+            conn.close()
+
+            st.success("수정사항이 저장되었습니다.")
+
+            st.rerun()
+
+    else:
+
+        st.info("조회된 데이터가 없습니다.")
