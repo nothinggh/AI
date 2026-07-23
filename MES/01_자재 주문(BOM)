@@ -1,361 +1,185 @@
 import streamlit as st
-
 import sqlite3
-
 import pandas as pd
+from datetime import datetime
 
-from datetime import date
-
-  
-
-st.set_page_config(layout="wide")
-
-  
-
-st.markdown("""
-
-    <style>
-
-    .stTextInput > div > div > input, .stSelectbox > div > div > div, .stNumberInput > div > div > input, .stDateInput > div > div > input {
-
-        min-height: 28px !important;
-
-        height: 28px !important;
-
-        padding: 2px 8px !important;
-
-        font-size: 12px !important;
-
-    }
-
-    .stSelectbox label, .stTextInput label, .stNumberInput label, .stDateInput label, .stTextArea label {
-
-        font-size: 11px !important;
-
-        margin-bottom: 2px !important;
-
-    }
-
-    .stTextArea textarea {
-
-        font-size: 12px !important;
-
-        padding: 4px 8px !important;
-
-    }
-
-    div[data-baseweb="select"] {
-
-        min-height: 28px !important;
-
-    }
-
-    </style>
-
-""", unsafe_allow_html=True)
-
-  
-
-DB_PATH = "/home/gram/work/pipe_mes/sql/pipe_mes.db"
-
-  
+DB_PATH = "/home/smart/work/pipe_mes/sql/pipe_mes.db"
 
 def init_db():
-
-    conn = sqlite3.connect(DB_PATH)
-
-    c = conn.cursor()
-
-    c.execute("""
-
-        CREATE TABLE IF NOT EXISTS BOM (
-
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            user_id TEXT,
-
-            ship_no TEXT,
-
-            item_type TEXT,
-
-            material TEXT,
-
-            size TEXT,
-
-            quantity INTEGER,
-
-            weight REAL,
-
-            price REAL,
-
-            order_date TEXT,
-
-            request_note TEXT
-
-        )
-
-    """)
-
-    conn.commit()
-
-    conn.close()
-
-  
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS BOM (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT,
+            ship_no TEXT,
+            item_type TEXT,
+            material TEXT,
+            size TEXT,
+            quantity INTEGER,
+            weight REAL,
+            price REAL,
+            order_date TEXT,
+            request_notes TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
 init_db()
 
-  
-
 WEIGHT_DATA = {
-
-    "8A": 0.6, "10A": 0.8, "15A": 1.3, "20A": 1.7, "25A": 2.5,
-
-    "32A": 3.4, "40A": 4.1, "50A": 5.5, "65A": 7.4, "80A": 8.8, "100A": 12.2
-
+    "Pipe(6M)": {"8A": 3.0, "10A": 4.0, "15A": 7.5, "20A": 10.0, "25A": 15.0, "32A": 20.0, "40A": 23.0, "50A": 31.0, "65A": 44.0, "80A": 53.0, "100A": 75.0},
+    "flange": {"8A": 0.5, "10A": 0.6, "15A": 0.8, "20A": 1.1, "25A": 1.4, "32A": 2.0, "40A": 2.2, "50A": 2.8, "65A": 4.0, "80A": 4.8, "100A": 5.8},
+    "coupling": {"8A": 0.1, "10A": 0.15, "15A": 0.2, "20A": 0.3, "25A": 0.4, "32A": 0.6, "40A": 0.7, "50A": 1.0, "65A": 1.5, "80A": 2.0, "100A": 2.8},
+    "bolt": {"8A": 0.05, "10A": 0.05, "15A": 0.08, "20A": 0.1, "25A": 0.12, "32A": 0.15, "40A": 0.18, "50A": 0.22, "65A": 0.25, "80A": 0.3, "100A": 0.35},
+    "nut": {"8A": 0.02, "10A": 0.02, "15A": 0.03, "20A": 0.04, "25A": 0.05, "32A": 0.06, "40A": 0.07, "50A": 0.09, "65A": 0.1, "80A": 0.12, "100A": 0.15},
+    "gasket": {"8A": 0.01, "10A": 0.01, "15A": 0.02, "20A": 0.02, "25A": 0.03, "32A": 0.04, "40A": 0.04, "50A": 0.05, "65A": 0.07, "80A": 0.08, "100A": 0.1},
+    "elbow": {"8A": 0.1, "10A": 0.15, "15A": 0.2, "20A": 0.35, "25A": 0.5, "32A": 0.8, "40A": 1.0, "50A": 1.6, "65A": 2.5, "80A": 3.4, "100A": 5.2},
+    "tee": {"8A": 0.15, "10A": 0.2, "15A": 0.3, "20A": 0.45, "25A": 0.7, "32A": 1.1, "40A": 1.4, "50A": 2.2, "65A": 3.5, "80A": 4.8, "100A": 7.1}
 }
-
-  
 
 PRICE_DATA = {
-
-    "Pipe(6M)": {"8A": 12000, "10A": 15000, "15A": 18000, "20A": 22000, "25A": 28000, "32A": 35000, "40A": 42000, "50A": 55000, "65A": 72000, "80A": 88000, "100A": 110000},
-
-    "flange": {"8A": 3000, "10A": 3500, "15A": 4000, "20A": 5000, "25A": 6500, "32A": 8000, "40A": 9500, "50A": 12000, "65A": 16000, "80A": 20000, "100A": 26000},
-
-    "coupling": {"8A": 1500, "10A": 1800, "15A": 2000, "20A": 2500, "25A": 3200, "32A": 4000, "40A": 5000, "50A": 6500, "65A": 8500, "80A": 11000, "100A": 15000},
-
-    "bolt": {"8A": 300, "10A": 400, "15A": 500, "20A": 600, "25A": 800, "32A": 1000, "40A": 1200, "50A": 1500, "65A": 2000, "80A": 2500, "100A": 3000},
-
-    "nut": {"8A": 200, "10A": 250, "15A": 300, "20A": 400, "25A": 500, "32A": 650, "40A": 800, "50A": 1000, "65A": 1300, "80A": 1600, "100A": 2000},
-
-    "gasket": {"8A": 500, "10A": 600, "15A": 800, "20A": 1000, "25A": 1200, "32A": 1500, "40A": 1800, "50A": 2300, "65A": 3000, "80A": 3800, "100A": 5000},
-
-    "elbow": {"8A": 2000, "10A": 2300, "15A": 2800, "20A": 3500, "25A": 4500, "32A": 6000, "40A": 7500, "50A": 10000, "65A": 14000, "80A": 18000, "100A": 24000},
-
-    "tee": {"8A": 2500, "10A": 3000, "15A": 3500, "20A": 4500, "25A": 6000, "32A": 8000, "40A": 10000, "50A": 13000, "65A": 18000, "80A": 23000, "100A": 30000}
-
+    "Pipe(6M)": {"8A": 12000, "10A": 15000, "15A": 20000, "20A": 26000, "25A": 35000, "32A": 48000, "40A": 55000, "50A": 72000, "65A": 98000, "80A": 120000, "100A": 160000},
+    "flange": {"8A": 3000, "10A": 3500, "15A": 4500, "20A": 6000, "25A": 8000, "32A": 11000, "40A": 13000, "50A": 17000, "65A": 23000, "80A": 28000, "100A": 36000},
+    "coupling": {"8A": 1000, "10A": 1200, "15A": 1500, "20A": 2000, "25A": 2800, "32A": 3800, "40A": 4500, "50A": 6000, "65A": 8500, "80A": 11000, "100A": 15000},
+    "bolt": {"8A": 300, "10A": 300, "15A": 400, "20A": 500, "25A": 600, "32A": 800, "40A": 900, "50A": 1200, "65A": 1500, "80A": 1800, "100A": 2200},
+    "nut": {"8A": 100, "10A": 100, "15A": 150, "20A": 200, "25A": 250, "32A": 300, "40A": 350, "50A": 450, "65A": 550, "80A": 650, "100A": 800},
+    "gasket": {"8A": 500, "10A": 500, "15A": 700, "20A": 900, "25A": 1200, "32A": 1500, "40A": 1800, "50A": 2300, "65A": 3000, "80A": 3800, "100A": 5000},
+    "elbow": {"8A": 1500, "10A": 1800, "15A": 2200, "20A": 3000, "25A": 4200, "32A": 5800, "40A": 7000, "50A": 9500, "65A": 14000, "80A": 18000, "100A": 25000},
+    "tee": {"8A": 2000, "10A": 2400, "15A": 3000, "20A": 4200, "25A": 5800, "32A": 8000, "40A": 9800, "50A": 13500, "65A": 19000, "80A": 25000, "100A": 34000}
 }
 
-  
+st.set_page_config(layout="wide")
+
+st.markdown("""
+    <style>
+    .block-container {padding-top: 1rem; padding-bottom: 1rem;}
+    div[data-baseweb="input"] {min-height: 28px;}
+    div[data-baseweb="select"] {min-height: 28px;}
+    .stTextInput>div>div>input {padding: 2px 8px; font-size: 13px;}
+    .stNumberInput>div>div>input {padding: 2px 8px; font-size: 13px;}
+    .stSelectbox>div>div {font-size: 13px;}
+    .stDateInput>div>div>input {padding: 2px 8px; font-size: 13px;}
+    label {font-size: 12px !important; margin-bottom: 0px !important;}
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown("---")
+st.title("자재 주문(BOM)")
+st.markdown("---")
 
 tab1, tab2 = st.tabs(["1. 자재 주문 등록", "2. 전체 주문 관리"])
 
-  
+sizes = ["8A", "10A", "15A", "20A", "25A", "32A", "40A", "50A", "65A", "80A", "100A"]
+materials = ["steel", "sus", "copper", "asbestos", "rubber"]
+item_types = ["Pipe(6M)", "flange", "coupling", "bolt", "nut", "gasket", "elbow", "tee"]
 
 with tab1:
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        user_id = st.text_input("주문자 ID")
+        ship_no = st.text_input("호선 번호")
+        material = st.selectbox("재질", materials)
+    with col2:
+        if material in ["steel", "sus"]:
+            avail_sizes = [s for s in sizes if s not in ["8A", "10A"]]
+        elif material == "copper":
+            avail_sizes = ["8A", "10A"]
+        else:
+            avail_sizes = sizes
+            
+        size = st.selectbox("size", avail_sizes)
+        item_type = st.selectbox("자재 종류", item_types)
+        quantity = st.number_input("수량", min_value=1, value=1, step=1)
+    with col3:
+        unit_weight = WEIGHT_DATA.get(item_type, {}).get(size, 0.0)
+        unit_price = PRICE_DATA.get(item_type, {}).get(size, 0)
+        
+        calc_weight = round(unit_weight * quantity, 2)
+        calc_price = unit_price * quantity
+        
+        weight = st.number_input("중량 (kg)", value=calc_weight, disabled=True)
+        price = st.number_input("가격 (원)", value=calc_price, disabled=True)
+        order_date = st.date_input("주문 날짜", datetime.now())
+        
+    request_notes = st.text_input("요청 사항")
 
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-
-        user_id = st.text_input("주문자 ID")
-
-        material = st.selectbox("재질", ["steel", "sus", "copper", "asbestos", "rubber"])
-
-    with col2:
-
-        ship_no = st.text_input("호선 번호")
-
-        all_sizes = ["8A", "10A", "15A", "20A", "25A", "32A", "40A", "50A", "65A", "80A", "100A"]
-
-        if material in ["steel", "sus"]:
-
-            valid_sizes = [s for s in all_sizes if s not in ["8A", "10A"]]
-
-        elif material == "copper":
-
-            valid_sizes = ["8A", "10A"]
-
-        else:
-
-            valid_sizes = all_sizes
-
-        selected_size = st.selectbox("Size", valid_sizes)
-
-  
-
-    with col3:
-
-        item_type = st.selectbox("자재 종류", ["Pipe(6M)", "flange", "coupling", "bolt", "nut", "gasket", "elbow", "tee"])
-
-        quantity = st.number_input("수량", min_value=1, value=1, step=1)
-
-  
-
-    with col4:
-
-        order_date = st.date_input("주문 날짜", date.today())
-
-        calc_weight = WEIGHT_DATA.get(selected_size, 0.0) if item_type == "Pipe(6M)" else 0.0
-
-        calc_price = PRICE_DATA.get(item_type, {}).get(selected_size, 0)
-
-        st.text_input("중량(개당/kg)", value=str(calc_weight), disabled=True)
-
-        st.text_input("가격(개당/원)", value=str(calc_price), disabled=True)
-
-  
-
-    request_note = st.text_area("요청 사항", height=60)
-
-  
-
-    if st.button("등록"):
-
-        if not user_id or not ship_no:
-
-            st.error("주문자 ID와 호선 번호를 입력하세요.")
-
-        else:
-
-            conn = sqlite3.connect(DB_PATH)
-
-            c = conn.cursor()
-
-            c.execute("""
-
-                INSERT INTO BOM (user_id, ship_no, item_type, material, size, quantity, weight, price, order_date, request_note)
-
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-
-            """, (user_id, ship_no, item_type, material, selected_size, quantity, calc_weight, calc_price, str(order_date), request_note))
-
-            conn.commit()
-
-            conn.close()
-
-            st.success("등록되었습니다.")
-
-  
+    if st.button("주문 등록"):
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO BOM (user_id, ship_no, item_type, material, size, quantity, weight, price, order_date, request_notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (user_id, ship_no, item_type, material, size, quantity, calc_weight, calc_price, str(order_date), request_notes))
+        conn.commit()
+        conn.close()
+        st.success("등록 완료")
 
 with tab2:
-
-    conn = sqlite3.connect(DB_PATH)
-
-    df = pd.read_sql_query("SELECT * FROM BOM", conn)
-
-    conn.close()
-
-  
-
-    col_search, col_btn1, col_btn2 = st.columns([3, 1, 1])
-
-    with col_search:
-
-        search_kw = st.text_input("검색어 입력 (모든 컬럼 대상)", "")
-
-    if search_kw:
-
-        mask = df.astype(str).apply(lambda x: x.str.contains(search_kw, case=False)).any(axis=1)
-
-        df = df[mask]
-
-  
-
-    if "select_all" not in st.session_state:
-
-        st.session_state.select_all = False
-
-  
-
-    with col_btn1:
-
-        if st.button("전체 선택 / 해제"):
-
-            st.session_state.select_all = not st.session_state.select_all
-
-            st.rerun()
-
-  
-
-    if not df.empty:
-
-        df.insert(0, "선택", st.session_state.select_all)
-
-  
-
-        edited_df = st.data_editor(
-
-            df,
-
-            column_config={
-
-                "id": st.column_config.NumberColumn("ID", disabled=True),
-
-                "선택": st.column_config.CheckboxColumn("선택", default=False)
-
-            },
-
-            hide_index=True,
-
-            use_container_width=True
-
-        )
-
-  
-
-        with col_btn2:
-
-            if st.button("선택 삭제"):
-
-                selected_ids = edited_df[edited_df["선택"] == True]["id"].tolist()
-
-                if selected_ids:
-
-                    conn = sqlite3.connect(DB_PATH)
-
-                    c = conn.cursor()
-
-                    c.executemany("DELETE FROM BOM WHERE id = ?", [(i,) for i in selected_ids])
-
-                    conn.commit()
-
-                    conn.close()
-
-                    st.success("삭제되었습니다.")
-
-                    st.rerun()
-
-  
-
-        if st.button("수정사항 저장"):
-
-            conn = sqlite3.connect(DB_PATH)
-
-            c = conn.cursor()
-
-            for idx, row in edited_df.iterrows():
-
-                c.execute("""
-
-                    UPDATE BOM SET
-
-                        user_id = ?, ship_no = ?, item_type = ?, material = ?,
-
-                        size = ?, quantity = ?, weight = ?, price = ?,
-
-                        order_date = ?, request_note = ?
-
-                    WHERE id = ?
-
-                """, (
-
-                    row["user_id"], row["ship_no"], row["item_type"], row["material"],
-
-                    row["size"], int(row["quantity"]), float(row["weight"]), float(row["price"]),
-
-                    str(row["order_date"]), str(row["request_note"]), int(row["id"])
-
-                ))
-
-            conn.commit()
-
-            conn.close()
-
-            st.success("수정사항이 저장되었습니다.")
-
-            st.rerun()
-
-    else:
-
-        st.info("조회된 데이터가 없습니다.")
+    conn = sqlite3.connect(DB_PATH)
+    df = pd.read_sql_query("SELECT * FROM BOM", conn)
+    conn.close()
+
+    col_s1, col_s2 = st.columns(2)
+    with col_s1:
+        search_col = st.selectbox("검색 컬럼", options=df.columns if not df.empty else ["id"])
+    with col_s2:
+        search_kw = st.text_input("검색어")
+
+    if search_kw and not df.empty:
+        df = df[df[search_col].astype(str).str.contains(search_kw, case=False, na=False)]
+
+    if 'select_all' not in st.session_state:
+        st.session_state.select_all = False
+
+    def toggle_all():
+        st.session_state.select_all = not st.session_state.select_all
+
+    st.button("전체 선택 / 해제", on_click=toggle_all)
+
+    if not df.empty:
+        df.insert(0, "선택", st.session_state.select_all)
+        
+        edited_df = st.data_editor(
+            df,
+            column_config={
+                "선택": st.column_config.CheckboxColumn(required=True),
+                "id": st.column_config.NumberColumn(disabled=True),
+                "item_type": st.column_config.SelectboxColumn(options=item_types),
+                "material": st.column_config.SelectboxColumn(options=materials),
+                "size": st.column_config.SelectboxColumn(options=sizes),
+            },
+            hide_index=True,
+            use_container_width=True
+        )
+
+        col_b1, col_b2 = st.columns(2)
+        with col_b1:
+            if st.button("수정 내용 저장"):
+                conn = sqlite3.connect(DB_PATH)
+                c = conn.cursor()
+                for idx, row in edited_df.iterrows():
+                    c.execute('''
+                        UPDATE BOM SET 
+                        user_id=?, ship_no=?, item_type=?, material=?, size=?, 
+                        quantity=?, weight=?, price=?, order_date=?, request_notes=?
+                        WHERE id=?
+                    ''', (row['user_id'], row['ship_no'], row['item_type'], row['material'], row['size'],
+                          row['quantity'], row['weight'], row['price'], row['order_date'], row['request_notes'], row['id']))
+                conn.commit()
+                conn.close()
+                st.success("수정 완료")
+                st.rerun()
+
+        with col_b2:
+            if st.button("선택 항목 삭제"):
+                selected_ids = edited_df[edited_df["선택"] == True]["id"].tolist()
+                if selected_ids:
+                    conn = sqlite3.connect(DB_PATH)
+                    c = conn.cursor()
+                    c.executemany("DELETE FROM BOM WHERE id=?", [(i,) for i in selected_ids])
+                    conn.commit()
+                    conn.close()
+                    st.success("삭제 완료")
+                    st.rerun()
