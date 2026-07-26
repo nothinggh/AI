@@ -1,1 +1,286 @@
-pass
+import random
+import sqlite3
+from datetime import datetime
+import pandas as pd
+import streamlit as st
+
+DB_PATH = "/home/gram/work/pipe_mes/sql/pipe_mes.db"
+
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS MFP (
+            lot_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            lot_no TEXT,
+            ship_no TEXT,
+            draw_type TEXT,
+            draw_no TEXT,
+            vendor TEXT,
+            factory TEXT,
+            receipt_date TEXT,
+            status TEXT,
+            start_datetime TEXT,
+            end_datetime TEXT,
+            elapsed_hours REAL,
+            issue_type TEXT,
+            issue_detail TEXT,
+            worker TEXT,
+            manager TEXT
+        )
+    """
+    )
+    conn.commit()
+    conn.close()
+
+
+init_db()
+
+st.markdown(
+    """
+<style>
+    div[data-baseweb="input"] {
+        height: 30px !important;
+        min-height: 30px !important;
+    }
+    div[data-baseweb="select"] > div {
+        min-height: 30px !important;
+        height: 30px !important;
+    }
+    .stNumberInput input {
+        height: 30px !important;
+    }
+    .stTextInput input {
+        height: 30px !important;
+    }
+    div[class*="stDateInput"] input {
+        height: 30px !important;
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+st.markdown("---")
+st.title("제작 공정(MFP)")
+st.markdown("##### (Manufacturing Process)")
+st.markdown("---")
+
+tab = st.radio(
+    "",
+    ["1. 제작 공정 등록", "2. 제작 공정 관리"],
+    horizontal=True,
+    label_visibility="collapsed",
+)
+
+FACTORIES = ["공장A", "공장B", "공장C"]
+STATUS_LIST = ["제작 중", "재 제작", "보류", "완료", "출고"]
+ISSUE_TYPES = ["없음", "파손", "불량", "오작"]
+
+if tab == "1. 제작 공정 등록":
+    c1, c2 = st.columns(2)
+    with c1:
+        ship_no = st.text_input("호선 번호").upper()
+        draw_type = st.text_input("도면 종류").upper()
+        draw_no = st.text_input("도면 번호").upper()
+        vendor = st.text_input("제작 업체명").upper()
+        factory = st.selectbox("배치 공장", FACTORIES)
+        receipt_date = st.date_input("제작 도면 접수 일자")
+        status = st.selectbox("제작 진행 상황", STATUS_LIST)
+
+    with c2:
+        start_d = st.date_input("제작 시작 날짜")
+        start_t = st.time_input("제작 시작 시간")
+        end_d = st.date_input("제작 완료 날짜")
+        end_t = st.time_input("제작 완료 시간")
+
+        start_dt = datetime.combine(start_d, start_t)
+        end_dt = datetime.combine(end_d, end_t)
+
+        if end_dt >= start_dt:
+            elapsed_hours = round(
+                (end_dt - start_dt).total_seconds() / 3600.0, 2
+            )
+        else:
+            elapsed_hours = 0.0
+
+        st.text_input(
+            "실 투입 시간 (시간)", value=f"{elapsed_hours}", disabled=True
+        )
+
+        issue_type = st.selectbox("제작 문제", ISSUE_TYPES)
+        issue_detail = st.text_input("이슈").upper()
+        worker = st.text_input("작업자").upper()
+        manager = st.text_input("관리자").upper()
+
+    if st.button("등록"):
+        if not ship_no or not draw_type or not vendor:
+            st.error("호선 번호, 도면 종류, 제작 업체명을 입력하세요.")
+        else:
+            today_str = datetime.now().strftime("%Y%m%d")
+            rand_4 = f"{random.randint(0, 9999):04d}"
+            lot_no = f"{ship_no}-{draw_type}-{vendor}-{today_str}-{rand_4}"
+
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute(
+                """
+                INSERT INTO MFP (
+                    lot_no, ship_no, draw_type, draw_no, vendor, factory,
+                    receipt_date, status, start_datetime, end_datetime,
+                    elapsed_hours, issue_type, issue_detail, worker, manager
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+                (
+                    lot_no,
+                    ship_no,
+                    draw_type,
+                    draw_no,
+                    vendor,
+                    factory,
+                    str(receipt_date),
+                    status,
+                    start_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    end_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    elapsed_hours,
+                    issue_type,
+                    issue_detail,
+                    worker,
+                    manager,
+                ),
+            )
+            conn.commit()
+            conn.close()
+            st.success(f"등록 완료 (LOT 번호: {lot_no})")
+
+elif tab == "2. 제작 공정 관리":
+    conn = sqlite3.connect(DB_PATH)
+    df = pd.read_sql_query("SELECT * FROM MFP", conn)
+    conn.close()
+
+    if df.empty:
+        st.info("데이터가 없습니다.")
+    else:
+        s_col1, s_col2 = st.columns([1, 2])
+        with s_col1:
+            search_col = st.selectbox("검색 컬럼", ["전체"] + list(df.columns))
+        with s_col2:
+            search_term = st.text_input("검색어").upper()
+
+        filtered_df = df.copy()
+        if search_term:
+            if search_col == "전체":
+                mask = filtered_df.astype(str).apply(
+                    lambda x: x.str.contains(search_term, case=False).any(),
+                    axis=1,
+                )
+                filtered_df = filtered_df[mask]
+            else:
+                filtered_df = filtered_df[
+                    filtered_df[search_col]
+                    .astype(str)
+                    .str.contains(search_term, case=False)
+                ]
+
+        btn_c1, btn_c2, _ = st.columns([1, 1, 4])
+        with btn_c1:
+            select_all = st.checkbox("전체 선택")
+        with btn_c2:
+            delete_btn = st.button("선택 삭제")
+
+        if select_all:
+            filtered_df["선택"] = True
+        else:
+            filtered_df["선택"] = False
+
+        cols = ["선택"] + [c for c in filtered_df.columns if c != "선택"]
+        filtered_df = filtered_df[cols]
+
+        edited_df = st.data_editor(
+            filtered_df,
+            column_config={
+                "선택": st.column_config.CheckboxColumn("선택", default=False),
+                "lot_id": st.column_config.NumberColumn("LOT ID", disabled=True),
+                "lot_no": st.column_config.TextColumn("LOT 번호"),
+                "factory": st.column_config.SelectboxColumn(
+                    "배치공장", options=FACTORIES
+                ),
+                "status": st.column_config.SelectboxColumn(
+                    "진행상황", options=STATUS_LIST
+                ),
+                "issue_type": st.column_config.SelectboxColumn(
+                    "제작문제", options=ISSUE_TYPES
+                ),
+            },
+            disabled=["lot_id"],
+            hide_index=True,
+            use_container_width=True,
+        )
+
+        if delete_btn:
+            del_ids = edited_df[edited_df["선택"] == True]["lot_id"].tolist()
+            if del_ids:
+                conn = sqlite3.connect(DB_PATH)
+                c = conn.cursor()
+                c.executemany(
+                    "DELETE FROM MFP WHERE lot_id = ?", [(i,) for i in del_ids]
+                )
+                conn.commit()
+                conn.close()
+                st.success("삭제 완료")
+                st.rerun()
+
+        if st.button("수정 사항 저장"):
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            for idx, row in edited_df.iterrows():
+                try:
+                    s_dt = datetime.strptime(
+                        str(row["start_datetime"]), "%Y-%m-%d %H:%M:%S"
+                    )
+                    e_dt = datetime.strptime(
+                        str(row["end_datetime"]), "%Y-%m-%d %H:%M:%S"
+                    )
+                    if e_dt >= s_dt:
+                        calc_el = round(
+                            (e_dt - s_dt).total_seconds() / 3600.0, 2
+                        )
+                    else:
+                        calc_el = 0.0
+                except:
+                    calc_el = row["elapsed_hours"]
+
+                c.execute(
+                    """
+                    UPDATE MFP
+                    SET lot_no = ?, ship_no = ?, draw_type = ?, draw_no = ?, vendor = ?, factory = ?,
+                        receipt_date = ?, status = ?, start_datetime = ?, end_datetime = ?,
+                        elapsed_hours = ?, issue_type = ?, issue_detail = ?, worker = ?, manager = ?
+                    WHERE lot_id = ?
+                """,
+                    (
+                        str(row["lot_no"]).upper(),
+                        str(row["ship_no"]).upper(),
+                        str(row["draw_type"]).upper(),
+                        str(row["draw_no"]).upper(),
+                        str(row["vendor"]).upper(),
+                        row["factory"],
+                        str(row["receipt_date"]),
+                        row["status"],
+                        str(row["start_datetime"]),
+                        str(row["end_datetime"]),
+                        calc_el,
+                        row["issue_type"],
+                        str(row["issue_detail"]).upper(),
+                        str(row["worker"]).upper(),
+                        str(row["manager"]).upper(),
+                        row["lot_id"],
+                    ),
+                )
+            conn.commit()
+            conn.close()
+            st.success("수정 완료")
+            st.rerun()
