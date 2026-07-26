@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 import random
 
-DB_PATH = "/home/smart/work/pipe_mes/sql/pipe_mes.db"
+DB_PATH = "/home/gram/work/pipe_mes/sql/pipe_mes.db"
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
