@@ -98,7 +98,7 @@ if tab_choice == "1. 제작 공정 등록":
         weight = st.number_input("중량", min_value=0.0, step=0.1)
 
     with col2:
-        status = st.selectbox("제작 진행 상황", ["제작 중", "재 제작", "보류", "완료", "출고"])
+        status = st.selectbox("제작 진행 상황", ["제작 중", "재 제작", "보류", "폐기", "완료", "출고"])
         start_d = st.date_input("제작 시작 날짜")
         start_t = st.time_input("제작 시작 시간")
         end_d = st.date_input("제작 완료 날짜")
@@ -177,7 +177,7 @@ elif tab_choice == "2. 제작 공정 관리":
             column_config={
                 "id": st.column_config.NumberColumn("id", disabled=True),
                 "factory": st.column_config.SelectboxColumn("factory", options=["공장A", "공장B", "공장C"]),
-                "status": st.column_config.SelectboxColumn("status", options=["제작 중", "재 제작", "보류", "완료", "출고"]),
+                "status": st.column_config.SelectboxColumn("status", options=["제작 중", "재 제작", "보류", "폐기", "완료", "출고"]),
                 "issue_type": st.column_config.SelectboxColumn("issue_type", options=["없음", "파손", "불량", "오작"])
             },
             hide_index=True,
