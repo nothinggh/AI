@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 from datetime import datetime
+import re
 
 st.set_page_config(layout="wide")
 
@@ -52,22 +53,24 @@ def get_next_dwg_no(dwg_type):
         seq = 1001
     return f"{prefix}{seq}"
 
-def get_next_lot_no(ship_no, dwg_type, vendor):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
+def get_next_lot_no(ship_no, dwg_type, vendor, dwg_no):
+    """
+    LOT 번호의 마지막 4자리를 도면 번호(dwg_no)의 끝 4자리 숫자와 매칭합니다.
+    """
     today_str = datetime.now().strftime("%Y%m%d")
     prefix = f"{ship_no}-{dwg_type}-{vendor}-{today_str}-"
-    c.execute("SELECT lot_no FROM MFP WHERE lot_no LIKE ? ORDER BY id DESC LIMIT 1", (f"{prefix}%",))
-    row = c.fetchone()
-    conn.close()
-    if row and row[0]:
-        try:
-            seq = int(row[0].split("-")[-1]) + 1
-        except:
-            seq = 1
+    
+    # dwg_no에서 모든 숫자만 추출
+    digits = re.sub(r'\D', '', str(dwg_no))
+    
+    if len(digits) >= 4:
+        suffix = digits[-4:]  # 끝 4자리 추출
+    elif len(digits) > 0:
+        suffix = digits.zfill(4)  # 4자리 미만일 경우 앞에 0 채움
     else:
-        seq = 1
-    return f"{prefix}{seq:04d}"
+        suffix = "0001"  # 숫자가 없는 예외의 경우 기본값
+        
+    return f"{prefix}{suffix}"
 
 st.markdown("---")
 st.title("제작 공정(MFP)")
@@ -77,7 +80,6 @@ st.markdown("---")
 tab_choice = st.radio("", ["1. 제작 공정 등록", "2. 제작 공정 관리"], horizontal=True)
 
 if tab_choice == "1. 제작 공정 등록":
-    st.subheader("1. 제작 공정 등록")
     
     col1, col2, col3 = st.columns(3)
     
@@ -121,8 +123,9 @@ if tab_choice == "1. 제작 공정 등록":
         manager = st.text_input("관리자").strip().upper()
         
         auto_lot = st.checkbox("LOT 제작 번호 자동 생성", value=True)
-        if auto_lot and ship_no and dwg_type and vendor:
-            generated_lot = get_next_lot_no(ship_no, dwg_type, vendor)
+        # dwg_no가 있어야 끝 4자리를 추출할 수 있으므로 조건을 추가합니다.
+        if auto_lot and ship_no and dwg_type and vendor and dwg_no:
+            generated_lot = get_next_lot_no(ship_no, dwg_type, vendor, dwg_no)
             lot_no = st.text_input("LOT 제작 번호", value=generated_lot, disabled=True)
         else:
             lot_no = st.text_input("LOT 제작 번호").strip().upper()
@@ -147,7 +150,6 @@ if tab_choice == "1. 제작 공정 등록":
             st.success("성공적으로 등록되었습니다.")
 
 elif tab_choice == "2. 제작 공정 관리":
-    st.subheader("2. 제작 공정 관리")
     
     conn = sqlite3.connect(DB_PATH)
     df = pd.read_sql_query("SELECT * FROM MFP", conn)

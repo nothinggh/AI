@@ -1,0 +1,185 @@
+import streamlit as st
+import sqlite3
+import pandas as pd
+from datetime import datetime
+
+DB_PATH = "/home/gram/work/pipe_mes/sql/pipe_mes.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS YDP (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            lot_no TEXT,
+            ship_no TEXT,
+            unit_no TEXT,
+            weight REAL,
+            block_no TEXT,
+            area TEXT,
+            inspection TEXT,
+            progress TEXT,
+            start_time TEXT,
+            end_time TEXT,
+            actual_hours REAL,
+            workers INTEGER,
+            manager TEXT,
+            issue TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def get_connection():
+    return sqlite3.connect(DB_PATH)
+
+st.set_page_config(layout="wide")
+init_db()
+
+st.markdown("---")
+st.title("Yard 공정(YDP)")
+st.markdown("##### (Yard Process)")
+st.markdown("---")
+
+tab_choice = st.radio("구분", ["1. Yard 공정 등록", "2. Yard 공정 관리"], horizontal=True)
+
+if tab_choice == "1. Yard 공정 등록":
+    with st.form("register_form"):
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            ship_no = st.text_input("1. 호선 번호").upper()
+            unit_no = st.selectbox("2. unit no", ["UNIT-A", "UNIT-B", "UNIT-C", "UNIT-D", "UNIT-E", "UNIT-F", "UNIT-G", "UNIT-H", "UNIT-I", "UNIT-J"])
+            weight = st.number_input("3. 중량", min_value=0.0, step=0.1)
+            block_no = st.selectbox("4. block no", [f"B1{i:02d}" for i in range(1, 11)])
+            area = st.selectbox("5. area", ["E/R(엔진룸)", "HULL(선장)", "C/R(선실)"])
+
+        with col2:
+            inspection = st.selectbox("6. 검사", ["용접 검사(NDE)", "수압 테스트(Press)"])
+            progress = st.selectbox("7. yard 진행 상황", ["검사", "보류", "소조립", "중조립", "대조립", "DOCK 탑재", "시운전", "인도"])
+            start_date = st.date_input("8. yard 시작 날짜")
+            start_time_val = st.time_input("8. yard 시작 시간")
+            end_date = st.date_input("9. yard 완료 날짜")
+            end_time_val = st.time_input("9. yard 완료 시간")
+
+        with col3:
+            workers = st.number_input("10. yard 투입 인원", min_value=0, step=1)
+            manager = st.text_input("11. yard 관리자").upper()
+            issue = st.text_area("12. 이슈").upper()
+            
+            s_dt = datetime.combine(start_date, start_time_val)
+            e_dt = datetime.combine(end_date, end_time_val)
+            diff_hours = max(0.0, round((e_dt - s_dt).total_seconds() / 3600.0, 2))
+            st.text_input("13. yard 시 걸린 실 투입 시간(시간)", value=str(diff_hours), disabled=True)
+
+        lot_no = f"{ship_no}-INST-{block_no}".upper()
+        st.text_input("14. lot no (자동 생성)", value=lot_no, disabled=True)
+
+        submitted = st.form_submit_button("등록")
+        if submitted:
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO YDP (lot_no, ship_no, unit_no, weight, block_no, area, inspection, progress, start_time, end_time, actual_hours, workers, manager, issue)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (lot_no, ship_no, unit_no, weight, block_no, area, inspection, progress, s_dt.strftime("%Y-%m-%d %H:%M"), e_dt.strftime("%Y-%m-%d %H:%M"), diff_hours, workers, manager, issue))
+            conn.commit()
+            conn.close()
+            st.success("등록되었습니다.")
+
+elif tab_choice == "2. Yard 공정 관리":
+    conn = get_connection()
+    df = pd.read_sql_query("SELECT * FROM YDP", conn)
+    conn.close()
+
+    st.markdown("### 1. 검색")
+    search_col1, search_col2 = st.columns([1, 2])
+    with search_col1:
+        search_column = st.selectbox("2. 검색 컬럼", ["전체"] + list(df.columns) if not df.empty else ["전체"])
+    with search_col2:
+        search_keyword = st.text_input("3. 검색어").upper()
+
+    if not df.empty and search_keyword:
+        if search_column == "전체":
+            mask = df.astype(str).apply(lambda row: row.str.contains(search_keyword, case=False).any(), axis=1)
+            df = df[mask]
+        else:
+            df = df[df[search_column].astype(str).str.contains(search_keyword, case=False)]
+
+    st.markdown("### 4. 데이터 목록 및 수정")
+    
+    col_btn1, col_btn2, _ = st.columns([1, 1, 8])
+    with col_btn1:
+        select_all = st.checkbox("5. 전체 선택")
+    
+    if not df.empty:
+        df.insert(0, "선택", select_all)
+        
+        column_config = {
+            "선택": st.column_config.CheckboxColumn("선택", default=False),
+            "id": st.column_config.NumberColumn("1. id", disabled=True),
+            "lot_no": st.column_config.TextColumn("2. lot no"),
+            "ship_no": st.column_config.TextColumn("3. 호선 번호"),
+            "unit_no": st.column_config.SelectboxColumn("4. unit no", options=["UNIT-A", "UNIT-B", "UNIT-C", "UNIT-D", "UNIT-E", "UNIT-F", "UNIT-G", "UNIT-H", "UNIT-I", "UNIT-J"]),
+            "weight": st.column_config.NumberColumn("5. 중량"),
+            "block_no": st.column_config.SelectboxColumn("6. block no", options=[f"B1{i:02d}" for i in range(1, 11)]),
+            "area": st.column_config.SelectboxColumn("7. area", options=["E/R(엔진룸)", "HULL(선장)", "C/R(선실)"]),
+            "inspection": st.column_config.SelectboxColumn("8. 검사", options=["용접 검사(NDE)", "수압 테스트(Press)"]),
+            "progress": st.column_config.SelectboxColumn("9. yard 진행 상황", options=["검사", "보류", "소조립", "중조립", "대조립", "DOCK 탑재", "시운전", "인도"]),
+            "start_time": st.column_config.TextColumn("10. yard 시작 날짜와 시간"),
+            "end_time": st.column_config.TextColumn("11. yard 완료 날짜와 시간"),
+            "actual_hours": st.column_config.NumberColumn("12. yard 시 걸린 실 투입 시간"),
+            "workers": st.column_config.NumberColumn("13. yard 투입 인원"),
+            "manager": st.column_config.TextColumn("14. yard 관리자"),
+            "issue": st.column_config.TextColumn("15. 이슈")
+        }
+
+        edited_df = st.data_editor(
+            df,
+            column_config=column_config,
+            use_container_width=True,
+            hide_index=True,
+            num_rows="fixed"
+        )
+
+        col_action1, col_action2, _ = st.columns([1, 1, 8])
+        with col_action1:
+            if st.button("6. 수정 내용 저장"):
+                conn = get_connection()
+                cursor = conn.cursor()
+                for idx, row in edited_df.iterrows():
+                    ship_no_upper = str(row["ship_no"]).upper()
+                    block_no_val = str(row["block_no"])
+                    lot_no_upper = f"{ship_no_upper}-INST-{block_no_val}"
+                    manager_upper = str(row["manager"]).upper()
+                    issue_upper = str(row["issue"]).upper()
+                    
+                    cursor.execute("""
+                        UPDATE YDP SET 
+                            lot_no=?, ship_no=?, unit_no=?, weight=?, block_no=?, area=?, 
+                            inspection=?, progress=?, start_time=?, end_time=?, actual_hours=?, 
+                            workers=?, manager=?, issue=?
+                        WHERE id=?
+                    """, (
+                        lot_no_upper, ship_no_upper, row["unit_no"], row["weight"], block_no_val, row["area"],
+                        row["inspection"], row["progress"], row["start_time"], row["end_time"], row["actual_hours"],
+                        row["workers"], manager_upper, issue_upper, row["id"]
+                    ))
+                conn.commit()
+                conn.close()
+                st.success("수정사항이 저장되었습니다.")
+                st.rerun()
+
+        with col_action2:
+            if st.button("7. 선택 항목 삭제"):
+                selected_ids = edited_df[edited_df["선택"] == True]["id"].tolist()
+                if selected_ids:
+                    conn = get_connection()
+                    cursor = conn.cursor()
+                    cursor.executemany("DELETE FROM YDP WHERE id=?", [(i,) for i in selected_ids])
+                    conn.commit()
+                    conn.close()
+                    st.success("선택한 항목이 삭제되었습니다.")
+                    st.rerun()
+                else:
+                    st.warning("삭제할 항목을 선택해주세요.")
