@@ -105,7 +105,7 @@ if tab == "1. 설치 공정 등록":
                 "설치 시 걸린 실 투입 시간(시간)", value=duration, disabled=True
             )
 
-        issue = st.text_area("이슈 및 특이사항 입력", placeholder="특이사항이나 문제 발생 원인/내용을 입력하세요.")
+        issue = st.text_area("이슈", placeholder="특이사항이나 문제 발생 원인/내용을 입력하세요.")
 
         submitted = st.form_submit_button("등록")
 
@@ -236,7 +236,7 @@ elif tab == "2. 설치 공정 관리":
                     "설치 업체", options=vendor_options
                 ),
                 "issue": st.column_config.TextColumn(
-                    "이슈 및 특이사항", width="medium"
+                    "이슈", width="medium"
                 ),
             },
             disabled=["id", "lot_no", "duration"],

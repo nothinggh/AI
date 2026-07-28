@@ -118,7 +118,7 @@ if tab_choice == "1. 제작 공정 등록":
 
     with col3:
         issue_type = st.selectbox("제작 문제", ["없음", "파손", "불량", "오작"])
-        issue_desc = st.text_area("이슈 항목").strip().upper()
+        issue_desc = st.text_area("이슈").strip().upper()
         worker = st.text_input("작업자").strip().upper()
         manager = st.text_input("관리자").strip().upper()
         
