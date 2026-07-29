@@ -1,6 +1,6 @@
 import streamlit as st
 import sqlite3
-import pandas as pd
+import pandas as pd # pyright: ignore[reportMissingModuleSource]
 from datetime import datetime, time
 
 st.set_page_config(layout="wide")
