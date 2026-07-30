@@ -5,7 +5,7 @@ from datetime import datetime, time
 
 st.set_page_config(layout="wide")
 
-DB_PATH = "/home/smart/work/pipe_mes/sql/pipe_mes.db"
+DB_PATH = "/home/gram/work/pipe_mes/sql/pipe_mes.db"
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
