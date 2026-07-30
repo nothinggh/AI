@@ -1,11 +1,11 @@
 from datetime import datetime
 import sqlite3
-import pandas as pd
+import pandas as pd # type: ignore
 import streamlit as st
 
 st.set_page_config(layout="wide")
 
-DB_PATH = "/home/gram/work/pipe_mes/sql/pipe_mes.db"
+DB_PATH = "/home/smart/work/pipe_mes/sql/pipe_mes.db"
 
 
 def init_db():
