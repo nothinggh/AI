@@ -45,15 +45,7 @@ def items(keyword: str = "", item_type: str = "전체"):
             i.is_active,
             COUNT(DISTINCT l.lot_id) AS lot_count,
             COUNT(DISTINCT pm.production_material_id) AS material_use_count
-        FROM (
-            SELECT * FROM BOM
-            UNION ALL
-            SELECT * FROM MFP
-            UNION ALL
-            SELECT * FROM INSP
-            UNION ALL
-            SELECT * FROM YDP
-        ) AS i
+        FROM item AS i
         LEFT JOIN lot AS l
             ON i.item_id = l.item_id
         LEFT JOIN production_material AS pm
