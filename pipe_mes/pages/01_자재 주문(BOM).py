@@ -1,5 +1,5 @@
 import sqlite3
-import pandas as pd
+import pandas as pd # pyright: ignore[reportMissingModuleSource]
 import streamlit as st
 from datetime import datetime
 
