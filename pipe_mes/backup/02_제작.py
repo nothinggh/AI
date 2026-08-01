@@ -1,6 +1,6 @@
 import streamlit as st
 import sqlite3
-import pandas as pd # type: ignore
+import pandas as pd
 from datetime import datetime
 import re
 
