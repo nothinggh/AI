@@ -1,6 +1,6 @@
 from datetime import datetime
 import sqlite3
-import pandas as pd
+import pandas as pd # type: ignore
 import streamlit as st
 
 st.set_page_config(layout="wide")

@@ -1,8 +1,4 @@
 from src.db import fetch_all, fetch_dataframe, fetch_one
-<<<<<<< HEAD
-=======
-
->>>>>>> 4ab6ebfdddb4234cd8281af0592c71ba3f50ba74
 
 def table_counts():
     return fetch_dataframe("""
@@ -25,72 +21,52 @@ def table_list():
         """)
 
 
-
-<<<<<<< HEAD
 # 1. 호선별 자재 집계 함수 (총수량/총중량/총금액)
-def bom_summary_by_ship():
-=======
+def bom_summary_by_ship(keyword: str = ""):
+    """호선(ship_no)별 BOM 총수량, 총중량, 총금액을 집계합니다."""
+    where = ["ship_no IS NOT NULL AND ship_no != ''"]
+    params = []
+
     if keyword:
-        where.append("(i.item_code LIKE ? OR i.item_name LIKE ?)")
-        params.extend([f"%{keyword}%", f"%{keyword}%"])
+        where.append("ship_no LIKE ?")
+        params.append(f"%{keyword}%")
 
-    if item_type != "전체":
-        where.append("i.item_type = ?")
-        params.append(item_type)
+    where_clause = " AND ".join(where)
 
+    # Note: price가 단가라면 SUM(price * quantity)로 수정하세요.
+    # 만약 price가 이미 해당 행의 총금액이라면 SUM(price)가 맞습니다.
     return fetch_dataframe(
         f"""
         SELECT
-            i.item_id,
-            i.item_code,
-            i.item_name,
-            i.item_type,
-            i.unit,
-            i.is_active,
-            COUNT(DISTINCT l.lot_id) AS lot_count,
-            COUNT(DISTINCT pm.production_material_id) AS material_use_count
-        FROM (
-            SELECT * FROM BOM
-            UNION ALL
-            SELECT * FROM MFP
-            UNION ALL
-            SELECT * FROM INSP
-            UNION ALL
-            SELECT * FROM YDP
-        ) AS i
-        LEFT JOIN lot AS l
-            ON i.item_id = l.item_id
-        LEFT JOIN production_material AS pm
-            ON i.item_id = pm.material_item_id
-        WHERE {' AND '.join(where)}
-        GROUP BY
-            i.item_id,
-            i.item_code,
-            i.item_name,
-            i.item_type,
-            i.unit,
-            i.is_active
-        ORDER BY i.item_type, i.item_code
+            ship_no,
+            COALESCE(SUM(quantity), 0) AS total_quantity,
+            ROUND(COALESCE(SUM(weight), 0), 2) AS total_weight,
+            COALESCE(SUM(price * quantity), 0) AS total_price
+        FROM BOM
+        WHERE {where_clause}
+        GROUP BY ship_no
+        ORDER BY ship_no
         """,
         tuple(params),
     )
 
 
+# 2. 품목(item_type)별 집계 함수 (GROUP BY 수리)
 def item_type_counts():
->>>>>>> 4ab6ebfdddb4234cd8281af0592c71ba3f50ba74
+    """품목 타입(item_type)별 수량, 중량, 금액 집계"""
     return fetch_dataframe("""
         SELECT 
-            ship_no,
-            SUM(quantity) AS total_quantity,
-            ROUND(SUM(weight), 2) AS total_weight,
-            SUM(price * quantity) AS total_price
+            item_type,
+            COALESCE(SUM(quantity), 0) AS total_quantity,
+            ROUND(COALESCE(SUM(weight), 0), 2) AS total_weight,
+            COALESCE(SUM(price * quantity), 0) AS total_price
         FROM BOM
-        GROUP BY ship_no
-        ORDER BY ship_no
+        GROUP BY item_type
+        ORDER BY item_type
         """)
 
 
-# 2. 특정 호선(ship_no)의 BOM 데이터만 조회하는 함수
+# 3. 특정 호선(ship_no)의 BOM 데이터만 조회하는 함수
 def bom_by_ship_no(ship_no: str):
     return fetch_dataframe(
         """
