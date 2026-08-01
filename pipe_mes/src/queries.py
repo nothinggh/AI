@@ -1,4 +1,8 @@
 from src.db import fetch_all, fetch_dataframe, fetch_one
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4ab6ebfdddb4234cd8281af0592c71ba3f50ba74
 
 def table_counts():
     return fetch_dataframe("""
@@ -22,8 +26,58 @@ def table_list():
 
 
 
+<<<<<<< HEAD
 # 1. 호선별 자재 집계 함수 (총수량/총중량/총금액)
 def bom_summary_by_ship():
+=======
+    if keyword:
+        where.append("(i.item_code LIKE ? OR i.item_name LIKE ?)")
+        params.extend([f"%{keyword}%", f"%{keyword}%"])
+
+    if item_type != "전체":
+        where.append("i.item_type = ?")
+        params.append(item_type)
+
+    return fetch_dataframe(
+        f"""
+        SELECT
+            i.item_id,
+            i.item_code,
+            i.item_name,
+            i.item_type,
+            i.unit,
+            i.is_active,
+            COUNT(DISTINCT l.lot_id) AS lot_count,
+            COUNT(DISTINCT pm.production_material_id) AS material_use_count
+        FROM (
+            SELECT * FROM BOM
+            UNION ALL
+            SELECT * FROM MFP
+            UNION ALL
+            SELECT * FROM INSP
+            UNION ALL
+            SELECT * FROM YDP
+        ) AS i
+        LEFT JOIN lot AS l
+            ON i.item_id = l.item_id
+        LEFT JOIN production_material AS pm
+            ON i.item_id = pm.material_item_id
+        WHERE {' AND '.join(where)}
+        GROUP BY
+            i.item_id,
+            i.item_code,
+            i.item_name,
+            i.item_type,
+            i.unit,
+            i.is_active
+        ORDER BY i.item_type, i.item_code
+        """,
+        tuple(params),
+    )
+
+
+def item_type_counts():
+>>>>>>> 4ab6ebfdddb4234cd8281af0592c71ba3f50ba74
     return fetch_dataframe("""
         SELECT 
             ship_no,
