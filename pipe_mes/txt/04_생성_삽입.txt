@@ -1,0 +1,42 @@
+CREATE TABLE YDP (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            lot_no TEXT,
+            ship_no TEXT,
+            block_no TEXT,
+            unit_no TEXT,
+            area TEXT,
+            inspection TEXT,
+            progress TEXT,
+            start_datetime TEXT,
+            end_datetime TEXT,
+            actual_hours REAL,
+            headcount INTEGER,
+            manager TEXT,
+            issue TEXT
+        );
+
+INSERT INTO YDP (
+    lot_no, 
+    ship_no, 
+    block_no, 
+    unit_no, 
+    area, 
+    inspection, 
+    progress, 
+    start_datetime, 
+    end_datetime, 
+    actual_hours, 
+    headcount, 
+    manager, 
+    issue
+) VALUES 
+    ('SN101-YARD-B101', 'SN101', 'B101', 'UNIT-A', 'E/R(엔진룸)', '완료', '중조립', '2026-08-01 08:00:00', '2026-08-01 12:00:00', 4.0, 3, 'YARDADD01', ''),
+    ('SN101-YARD-B101', 'SN101', 'B101', 'UNIT-B', 'E/R(엔진룸)', '완료', '중조립', '2026-08-01 13:00:00', '2026-08-01 17:30:00', 4.5, 2, 'YARDADD01', ''),
+    ('SN101-YARD-B101', 'SN101', 'B101', 'UNIT-C', 'E/R(엔진룸)', '완료', '중조립', '2026-08-02 08:30:00', '2026-08-02 16:30:00', 7.0, 4, 'YARDADD01', ''),
+    ('SN101-YARD-B101', 'SN101', 'B101', 'UNIT-D', 'E/R(엔진룸)', '완료', '중조립', '2026-08-02 09:00:00', '2026-08-02 15:00:00', 5.5, 3, 'YARDADD01', ''),
+    ('SN101-YARD-B101', 'SN101', 'B101', 'UNIT-E', 'E/R(엔진룸)', '완료', '중조립', '2026-08-03 08:00:00', '2026-08-03 17:00:00', 8.0, 5, 'YARDADD01', ''),
+    ('SN101-YARD-B102', 'SN101', 'B102', 'UNIT-F', 'HULL(선장)', '완료', '대조립', '2026-08-03 10:00:00', '2026-08-03 14:00:00', 3.5, 2, 'YARDADD01', ''),
+    ('SN101-YARD-B102', 'SN101', 'B102', 'UNIT-G', 'HULL(선장)', '완료', '대조립', '2026-08-04 08:00:00', '2026-08-04 12:00:00', 4.0, 4, 'YARDADD01', ''),
+    ('SN101-YARD-B102', 'SN101', 'B102', 'UNIT-H', 'HULL(선장)', '완료', '대조립', '2026-08-04 13:00:00', '2026-08-04 18:00:00', 5.0, 3, 'YARDADD01', ''),
+    ('SN101-YARD-B102', 'SN101', 'B102', 'UNIT-I', 'HULL(선장)', '완료', '대조립', '2026-08-05 08:00:00', '2026-08-05 15:30:00', 6.5, 2, 'YARDADD01', ''),
+    ('SN101-YARD-B102', 'SN101', 'B102', 'UNIT-J', 'HULL(선장)', '완료', '대조립', '2026-08-05 09:00:00', '2026-08-05 12:00:00', 3.0, 3, 'YARDADD01', '');

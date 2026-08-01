@@ -1,0 +1,32 @@
+CREATE TABLE MFP (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ship_no TEXT,
+            dwg_type TEXT,
+            dwg_no TEXT,
+            lot_no TEXT,
+            vendor TEXT,
+            factory TEXT,
+            receipt_date TEXT,
+            weight REAL,
+            status TEXT,
+            start_time TEXT,
+            end_time TEXT,
+            duration REAL,
+            issue_type TEXT,
+            issue_desc TEXT,
+            worker TEXT,
+            manager TEXT
+        );
+
+INSERT INTO MFP (ship_no, dwg_type, dwg_no, lot_no, vendor, factory, receipt_date, weight, status, start_time, end_time, duration, issue_type, issue_desc, worker, manager)
+VALUES 
+('SN101', 'PIPE', 'PIPE-DWG-1001', 'SN101-PIPE-AAENG-20260701-1001', 'AAENG', '공장A', '2026-07-01', 12.50, '완료', '2026-07-01 08:30:00', '2026-07-01 10:30:00', 2.0, '없음', NULL, 'LEE', 'ADD01'),
+('SN101', 'PIPE', 'PIPE-DWG-1002', 'SN101-PIPE-AAENG-20260702-1002', 'AAENG', '공장A', '2026-07-02', 24.80, '완료', '2026-07-02 09:00:00', '2026-07-02 12:30:00', 3.5, '없음', NULL, 'LEE', 'ADD01'),
+('SN101', 'PIPE', 'PIPE-DWG-1003', 'SN101-PIPE-AAENG-20260703-1003', 'AAENG', '공장A', '2026-07-03', 18.30, '완료', '2026-07-03 13:00:00', '2026-07-03 14:15:00', 1.25, '없음', NULL, 'LEE', 'ADD01'),
+('SN101', 'PIPE', 'PIPE-DWG-1004', 'SN101-PIPE-AAENG-20260704-1004', 'AAENG', '공장B', '2026-07-04', 45.10, '완료', '2026-07-04 10:00:00', '2026-07-04 15:00:00', 5.0, '없음', NULL, 'LEE', 'ADD01'),
+('SN101', 'PIPE', 'PIPE-DWG-1005', 'SN101-PIPE-AAENG-20260705-1005', 'AAENG', '공장B', '2026-07-05', 8.90, '완료', '2026-07-05 08:00:00', '2026-07-05 09:45:00', 1.75, '없음', NULL, 'LEE', 'ADD01'),
+('SN101', 'PIPE', 'PIPE-DWG-1006', 'SN101-PIPE-AAENG-20260706-1006', 'AAENG', '공장B', '2026-07-06', 31.20, '완료', '2026-07-06 14:00:00', '2026-07-06 18:00:00', 4.0, '없음', NULL, 'LEE', 'ADD01'),
+('SN101', 'PIPE', 'PIPE-DWG-1007', 'SN101-PIPE-AAENG-20260707-1007', 'AAENG', '공장C', '2026-07-07', 15.60, '완료', '2026-07-07 09:30:00', '2026-07-07 11:30:00', 2.0, '없음', NULL, 'LEE', 'ADD01'),
+('SN101', 'PIPE', 'PIPE-DWG-1008', 'SN101-PIPE-AAENG-20260708-1008', 'AAENG', '공장C', '2026-07-08', 22.00, '완료', '2026-07-08 11:00:00', '2026-07-08 14:30:00', 3.5, '없음', NULL, 'LEE', 'ADD01'),
+('SN101', 'PIPE', 'PIPE-DWG-1009', 'SN101-PIPE-AAENG-20260709-1009', 'AAENG', '공장C', '2026-07-09', 5.40, '재 제작', '2026-07-09 15:30:00', '2026-07-09 16:30:00', 1.0, '파손', NULL, 'LEE', 'ADD01'),
+('SN101', 'PIPE', 'PIPE-DWG-1010', 'SN101-PIPE-AAENG-20260710-1010', 'AAENG', '공장C', '2026-07-10', 29.70, '보류', '2026-07-10 10:15:00', '2026-07-10 13:00:00', 2.75, '오작', '설계변경', 'LEE', 'ADD01');
