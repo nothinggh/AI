@@ -1,4 +1,4 @@
-from src.db import fetch_all, fetch_dataframe, fetch_one
+from src.db import fetch_dataframe, fetch_all, fetch_one
 
 def table_counts():
     return fetch_dataframe("""
@@ -83,3 +83,29 @@ def bom_by_ship_no(ship_no: str):
         """,
         (ship_no,),
     )
+
+
+def get_ship_summary_df():
+    query = """
+    SELECT 
+        ship_no AS ship_no,
+        manager AS manufacturer,
+        COUNT(DISTINCT unit_no) AS drawing_count,
+        COUNT(CASE WHEN issue IS NOT NULL AND TRIM(issue) <> '' THEN 1 END) AS issue_count,
+        SUM(actual_hours) AS total_hours,
+        SUM(headcount) AS total_headcount,
+        SUM(actual_hours * headcount) AS total_man_hours
+    FROM YDP
+    GROUP BY ship_no, manager;
+    """
+    
+    # DB에서 DataFrame으로 조회
+    df = fetch_dataframe(query)
+    
+    # 컬럼명 한글 변경 (필요 시)
+    df.columns = ['호선 번호', '제작업체', '도면 갯수', '이슈 건수', '토탈 실투입 시간', '작업자 수', '총 공수(M/H)']
+    return df
+
+# 실행 예시
+df_result = get_ship_summary_df()
+print(df_result)
