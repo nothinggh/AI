@@ -21,7 +21,6 @@ def table_list():
         """)
 
 
-# 1. 호선별 자재 집계 함수 (총수량/총중량/총금액)
 def bom_summary_by_ship(keyword: str = ""):
     """호선(ship_no)별 BOM 총수량, 총중량, 총금액을 집계합니다."""
     where = ["ship_no IS NOT NULL AND ship_no != ''"]
@@ -33,8 +32,6 @@ def bom_summary_by_ship(keyword: str = ""):
 
     where_clause = " AND ".join(where)
 
-    # Note: price가 단가라면 SUM(price * quantity)로 수정하세요.
-    # 만약 price가 이미 해당 행의 총금액이라면 SUM(price)가 맞습니다.
     return fetch_dataframe(
         f"""
         SELECT
@@ -51,7 +48,6 @@ def bom_summary_by_ship(keyword: str = ""):
     )
 
 
-# 2. 품목(item_type)별 집계 함수 (GROUP BY 수리)
 def item_type_counts():
     """품목 타입(item_type)별 수량, 중량, 금액 집계"""
     return fetch_dataframe("""
@@ -66,7 +62,6 @@ def item_type_counts():
         """)
 
 
-# 3. 특정 호선(ship_no)의 BOM 데이터만 조회하는 함수
 def bom_by_ship_no(ship_no: str):
     return fetch_dataframe(
         """
