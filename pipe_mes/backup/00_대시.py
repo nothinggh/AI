@@ -2,17 +2,30 @@ import pandas as pd  # type: ignore
 import streamlit as st
 import plotly.express as px # type: ignore
 
-st.set_page_config(page_title="전체 현황", layout="wide")
+st.set_page_config(page_title="주요 지표", layout="wide")
 
-from src.queries import bom_summary_by_ship
+from src.queries import table_counts, bom_summary_by_ship
 
-st.title("🚢 전체 현황")
+st.title("🚢 주요 지표")
 st.markdown("---")
+st.subheader("📋 DB테이블 및 품목 수")
+df_counts = table_counts()
+counts_dict = dict(zip(df_counts["table_name"], df_counts["row_count"]))
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    st.metric(label="BOM", value=f"{counts_dict.get('BOM', 0):,} 건")
+with col2:
+    st.metric(label="MFP", value=f"{counts_dict.get('MFP', 0):,} 건")
+with col3:
+    st.metric(label="INSP", value=f"{counts_dict.get('INSP', 0):,} 건")
+with col4:
+    st.metric(label="YDP", value=f"{counts_dict.get('YDP', 0):,} 건")
 
+
+st.markdown("---")
 df_summary = bom_summary_by_ship()
-
 if isinstance(df_summary, pd.DataFrame) and not df_summary.empty:
-    st.subheader("📌 BOM 호선별 집계 현황")
+    st.subheader("📦 BOM 호선별 집계 현황")
     df_display = df_summary[
         ["ship_no", "total_quantity", "total_weight", "total_price"]
     ]

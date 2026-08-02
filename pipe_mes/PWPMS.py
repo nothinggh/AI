@@ -1,11 +1,12 @@
 import streamlit as st
 
-from src.queries import table_counts
 from src.ui import (
     page_title,
     setup_page,
     show_database_status,
 )
+
+st.set_page_config(layout="wide")
 
 setup_page("소개")
 
@@ -25,22 +26,6 @@ st.markdown("""
     - 불량률 최소화 직원 매달 성과급 지급
     - 현장 작업자 역량 향상과 오작, 불량률 0% 달성 실현 추구
     """)
-
-
-st.markdown("---")
-st.subheader("DB테이블 및 품목 수")
-df_counts = table_counts()
-counts_dict = dict(zip(df_counts["table_name"], df_counts["row_count"]))
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.metric(label="BOM", value=f"{counts_dict.get('BOM', 0):,} 건")
-with col2:
-    st.metric(label="MFP", value=f"{counts_dict.get('MFP', 0):,} 건")
-with col3:
-    st.metric(label="INSP", value=f"{counts_dict.get('INSP', 0):,} 건")
-with col4:
-    st.metric(label="YDP", value=f"{counts_dict.get('YDP', 0):,} 건")
 
 
 st.markdown("""
