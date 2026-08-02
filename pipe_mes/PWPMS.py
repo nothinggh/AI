@@ -150,3 +150,4 @@ with st.expander("각 단계별 상세 설명 보기"):
     - **3. INSP (Installation Process):** 효율적 설치를 위한 배관 Grouping
     - **4. YDP (Yard Delivery Process):** 조선소 품질 검사, Block 설치 및 Dock 최종 탑재
     """)
+

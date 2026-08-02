@@ -1,6 +1,6 @@
 from pathlib import Path
 import sqlite3
-import pandas as pd
+import pandas as pd # type: ignore
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = BASE_DIR / "sql" / "pipe_mes.db"
