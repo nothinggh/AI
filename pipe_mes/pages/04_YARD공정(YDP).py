@@ -38,13 +38,13 @@ def init_db():
 init_db()
 
 
-st.title("🏗️ Yard 공정(YDP)")
+st.title("🏗️ YARD 공정(YDP)")
 st.markdown("##### (Yard Delivery Process)")
 st.markdown("---")
 
-menu = st.radio("", ["1. Yard 공정 등록", "2. Yard 공정 관리"], horizontal=True)
+menu = st.radio("", ["1. YARD 공정 등록", "2. YARD 공정 관리"], horizontal=True)
 
-if menu == "1. Yard 공정 등록":
+if menu == "1. YARD 공정 등록":
    
     col1, col2, col3 = st.columns(3)
     
@@ -102,7 +102,7 @@ if menu == "1. Yard 공정 등록":
             conn.close()
             st.success("등록되었습니다.")
 
-elif menu == "2. Yard 공정 관리":
+elif menu == "2. YARD 공정 관리":
     
     conn = get_connection()
     df = pd.read_sql_query("SELECT * FROM YDP", conn)

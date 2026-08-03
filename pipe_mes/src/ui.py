@@ -11,7 +11,7 @@ def page_title(title: str, description: str, tables: str):
     st.title(title)
     st.info(
         f"""
-        PWPMS: {description}
+        PMES: {description}
 
         DB테이블: {tables}
 

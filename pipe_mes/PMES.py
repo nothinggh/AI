@@ -12,7 +12,7 @@ setup_page("소개")
 
 page_title(
     "배관 관리 시스템",
-    "(Piping Work Process Management System)",
+    "(Piping Manufacturing Execution System)",
     "BOM MFP INSP YDP",
 )
 
