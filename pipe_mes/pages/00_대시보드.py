@@ -120,8 +120,8 @@ for i in range(0, len(df), cols_per_row):
 
             st.caption(
                 f"상태: {row['진행상황']} | "
-                f"이슈: {row['이슈건수']}건 | "
-                f"작업자: {row['작업자']}"
+                f"이슈: {row['이슈건수']}건"
+                # /"작업자: {row['작업자']}"
             )
 st.markdown("---")
 
@@ -205,10 +205,10 @@ for ship_no in target_hulls:
         continue
 
 
-    # 전체 진행률
+    # 전체 수량 / 완료 / 이슈
     total_cnt = ship_df["total_cnt"].sum()
+    completed_cnt = ship_df["completed_cnt"].sum()
     total_issue = ship_df["issues"].sum()
-
 
     # BLOCK 중복 제거 후 수량
     total_block = (
@@ -219,9 +219,9 @@ for ship_no in target_hulls:
         .nunique()
     )
 
-
+    # 전체 진행률
     total_progress = round(
-        ((total_cnt - total_issue) / total_cnt) * 100
+        (completed_cnt / total_cnt) * 100
         if total_cnt > 0 else 0
     )
 
@@ -232,7 +232,7 @@ for ship_no in target_hulls:
     for _, row in ship_df.iterrows():
 
         progress = round(
-            ((row["total_cnt"] - row["issues"]) / row["total_cnt"]) * 100
+            (row["completed_cnt"] / row["total_cnt"]) * 100
             if row["total_cnt"] > 0
             else 0
         )
@@ -260,5 +260,3 @@ for ship_no in target_hulls:
     st.divider()
 
 ###########################################################################
-
-

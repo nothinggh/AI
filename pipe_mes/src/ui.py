@@ -1,4 +1,4 @@
-import pandas as pd
+import pandas as pd # type: ignore
 import streamlit as st
 
 from src.db import DB_PATH, database_exists

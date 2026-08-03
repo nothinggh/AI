@@ -73,7 +73,7 @@ def get_next_lot_no(ship_no, dwg_type, vendor, dwg_no):
     return f"{prefix}{suffix}"
 
 
-st.title("제작 공정(MFP)")
+st.title("📐 제작 공정(MFP)")
 st.markdown("##### (Manufacturing Process)")
 st.markdown("---")
 

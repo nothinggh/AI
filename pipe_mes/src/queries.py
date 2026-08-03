@@ -224,7 +224,6 @@ def load_drawing_status(target_hulls: list[str] | None = None) -> pd.DataFrame:
 
 ##########################################################################
 
-
 def load_insp_status():
 
     query = """
@@ -263,6 +262,15 @@ def load_ydp_status():
         block_no,
 
         COUNT(*) AS total_cnt,
+
+        -- 완료건수 (검사, 보류 제외)
+        SUM(
+            CASE
+                WHEN TRIM(COALESCE(progress, '')) NOT IN ('검사', '보류')
+                THEN 1
+                ELSE 0
+            END
+        ) AS completed_cnt,
 
         SUM(
             CASE

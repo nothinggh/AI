@@ -38,7 +38,7 @@ def init_db():
 init_db()
 
 
-st.title("Yard 공정(YDP)")
+st.title("🏗️ Yard 공정(YDP)")
 st.markdown("##### (Yard Delivery Process)")
 st.markdown("---")
 

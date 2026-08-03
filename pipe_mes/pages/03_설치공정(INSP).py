@@ -46,7 +46,7 @@ def init_db():
 init_db()
 
 
-st.title("설치 공정(INSP)")
+st.title("🔩 설치 공정(INSP)")
 st.markdown("##### (Installation Process)")
 st.markdown("---")
 

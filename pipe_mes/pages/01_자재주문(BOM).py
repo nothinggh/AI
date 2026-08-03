@@ -234,7 +234,7 @@ ITEMS = ["PIPE(6M)", "FLANGE", "COUPLING", "BOLT", "NUT", "GASKET", "ELBOW", "TE
 
 
 
-st.title("자재 주문(BOM)")
+st.title("📦 자재 주문(BOM)")
 
 st.markdown("##### (Bill Of Materials)")
 
